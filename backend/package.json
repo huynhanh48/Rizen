@@ -1,0 +1,37 @@
+{
+  "name": "mobileapp",
+  "version": "1.0.0",
+  "description": "mobileapp",
+  "keywords": [
+    "flutter"
+  ],
+  "license": "ISC",
+  "author": "huynhanh48",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon --inspect app/index.js"
+  },
+  "dependencies": {
+    "@google/genai": "^1.23.0",
+    "@xenova/transformers": "^2.14.1",
+    "bcrypt": "^6.0.0",
+    "canvas": "^3.2.0",
+    "compute-cosine-similarity": "^1.1.0",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "ml-regression-multivariate-linear": "^2.0.4",
+    "mongoose": "^8.19.0",
+    "mongoose-slug-generator": "^1.0.0",
+    "morgan": "^1.10.1",
+    "multer": "^2.0.2",
+    "nodemailer": "^7.0.6",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}

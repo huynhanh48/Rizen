@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Mã Xác Thực</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f6f9;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 500px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      padding: 30px;
+      text-align: center;
+    }
+    .brand {
+      font-size: 22px;
+      font-weight: bold;
+      color: #6a1b9a;
+      margin-bottom: 20px;
+    }
+    .title {
+      font-size: 20px;
+      font-weight: bold;
+      margin: 20px 0;
+      color: #333;
+    }
+    .code-box {
+      background: #f8f8f8;
+      border-radius: 12px;
+      padding: 20px;
+      font-size: 28px;
+      letter-spacing: 12px;
+      font-weight: bold;
+      display: inline-block;
+      margin: 20px 0;
+      color: #111;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    .footer {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">Rizen</div>
+    <p>Xin chào <b>{{email}}</b>,</p>
+    <div class="title">MÃ XÁC THỰC CỦA BẠN</div>
+    <div class="code-box">{{code}}</div>
+    <p class="footer">
+      Nếu bạn không muốn xác thực email, hãy bỏ qua email này.
+    </p>
+  </div>
+</body>
+</html>

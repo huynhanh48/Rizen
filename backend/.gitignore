@@ -1,0 +1,9 @@
+# Thư mục phụ thuộc của Node.js, không bao giờ được commit
+node_modules/
+
+# Các thư mục chứa file tải lên và vector (tài nguyên lớn, thay đổi thường xuyên)
+uploads/
+vector/
+
+# Thêm file môi trường nếu chưa có
+.env
