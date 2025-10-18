@@ -24,7 +24,7 @@ const ProfileSchema = new Schema(
 
 const UserSchema = new Schema(
   {
-    username: { type: String },
+    username: { type: String, unique: true },
     passwordHash: { type: String },
     state: StateSchema,
     profile: ProfileSchema,

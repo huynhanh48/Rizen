@@ -76,14 +76,11 @@ class _ShowProductState extends State<ShowProduct> {
               textAlign: TextAlign.left,
               text: TextSpan(
                 children: [
-                  const TextSpan(
-                    text: "Tổng ",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  TextSpan(
+                    text: _product == null ? "" : _product!.name + "\n",
+                    style: TextStyle(color: Colors.black),
                   ),
+
                   TextSpan(
                     text: _product != null
                         ? "${NumberFormat("#,###").format(_product!.getProductTotalWithIndex())} USD"

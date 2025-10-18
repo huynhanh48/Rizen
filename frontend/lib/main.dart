@@ -9,6 +9,7 @@ import 'package:mobileapp/authentication/successful.dart';
 import 'package:mobileapp/authentication/verify.dart';
 import 'package:mobileapp/middleware/authgetway.dart';
 import 'package:mobileapp/model/setting.dart';
+import 'package:mobileapp/pages/chat.dart';
 import 'package:mobileapp/pages/home.dart';
 import 'package:mobileapp/pages/homemarket.dart';
 import 'package:mobileapp/pages/managementdb.dart';
@@ -47,6 +48,7 @@ class MyApp extends StatelessWidget {
         '/home/setting/database': (context) => Managementdb(),
         '/home/market': (context) => HomeMarket(),
         '/home/showproduct': (context) => ShowProduct(),
+        '/chat': (context) => ChatBox(),
       },
       home: AuthGetWay(),
     );

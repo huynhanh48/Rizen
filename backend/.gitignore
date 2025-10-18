@@ -4,6 +4,7 @@ node_modules/
 # Các thư mục chứa file tải lên và vector (tài nguyên lớn, thay đổi thường xuyên)
 uploads/
 vector/
+cache/
 
 # Thêm file môi trường nếu chưa có
 .env

@@ -57,7 +57,7 @@ async function embeddingImg({ filepath }) {
   // }
 }
 
-async function searchEmbeddingImg({ filepath, topk = 3 }) {
+async function searchEmbeddingImg({ filepath, topk = 1 }) {
   const source = await embeddingImg({ filepath });
   const vectors = await vector.find({});
   if (vectors) {
@@ -74,7 +74,7 @@ async function searchEmbeddingImg({ filepath, topk = 3 }) {
     return [];
   }
 }
-async function searchEmbeddingText({ question, topk = 3 }) {
+async function searchEmbeddingText({ question, topk = 1 }) {
   const source = await embeddingText({ caption: question });
   const vectors = await vector.find({});
   if (vectors) {
@@ -92,32 +92,53 @@ async function searchEmbeddingText({ question, topk = 3 }) {
   }
 }
 
-async function answerGemmi({ embedding, question, modal = ai }) {
+async function answerGemmi({
+  embedding,
+  question,
+  userSession,
+  role = "user",
+  modal = ai,
+}) {
   const references = embedding
+    .filter((item) => item && (item.label || item.caption))
     .map((item) => {
-      return `label : ${item.label} referenceInfor : ${item.caption}`;
+      const labelText = item.label
+        ? `Mẫu nến: ${item.label}`
+        : "Tài liệu được cung cấp";
+      const captionText = item.caption ? `Mô tả: ${item.caption}` : "";
+      return `${labelText}\n${captionText}`;
     })
-    .join("\n");
+    .join("\n\n");
+
   const prompt = `
-      Bạn là trợ lý ảo chuyên gia phân tích thị trường chứng khoán Việt Nam.
-      Tôi đã cung cấp các mẫu nến tìm được từ ảnh mà tôi gửi, bao gồm thông tin sau:
-      ${references}
+Bạn là trợ lý ảo chuyên gia phân tích thị trường chứng khoán Việt Nam. 
+${
+  references
+    ? `Dưới đây là thông tin được cung cấp từ hình ảnh hoặc dữ liệu đầu vào:\n${references}\n\n`
+    : ""
+}
 
-      Nhiệm vụ của bạn:
-      1. Dựa trên các mẫu nến này, phân tích xu hướng và rủi ro của cổ phiếu AAA (CTCP Nhựa An Phát Xanh - An Phat Bioplastics).
-      2. Kết hợp với dữ liệu thị trường hiện tại (giá, biến động) nếu có thể.
-      3. Đưa ra nhận định chi tiết, bao gồm:
-        - Dự báo tăng/giảm ngắn hạn
-        - Các mức hỗ trợ/kháng cự quan trọng
-        - Rủi ro cần lưu ý
-      4. Trình bày kết quả súc tích, dễ hiểu và chuyên gia.
+Hãy thực hiện nhiệm vụ sau:
+1. Phân tích xu hướng và rủi ro dựa trên các thông tin trên (hoặc kiến thức thị trường nếu không có dữ liệu).
+2. Kết hợp với dữ liệu thị trường hiện tại (giá, biến động) nếu có thể.
+3. Đưa ra nhận định chi tiết, gồm:
+   - Dự báo xu hướng ngắn hạn (tăng/giảm/đi ngang)
+   - Các mức hỗ trợ/kháng cự quan trọng
+   - Các rủi ro và tín hiệu cần lưu ý
+4. Viết ngắn gọn, rõ ràng, chuyên nghiệp và dễ hiểu.
 
-      Câu hỏi cần trả lời: ${question}
-      `;
+Câu hỏi: ${question}
+`;
 
   const response = await ai.models.generateContent({
     model: "gemini-2.0-flash-001",
     contents: prompt,
+    generationConfig: {
+      metadata: {
+        userSession,
+        timestamp: new Date().toISOString(),
+      },
+    },
   });
   return { question: prompt, answer: response.text };
 }
