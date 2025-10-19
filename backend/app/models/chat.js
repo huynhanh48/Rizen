@@ -8,6 +8,7 @@ const Messagechema = new Schema(
   {
     role: { type: String, default: "user" },
     content: { type: String },
+    img:{type:String ,default:null}
   },
   { timestamps: true }
 );

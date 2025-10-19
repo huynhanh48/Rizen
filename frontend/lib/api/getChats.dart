@@ -5,7 +5,7 @@ Future<Map<String, dynamic>?> getChats({
   String username = "",
   String slug = "",
 }) async {
-  var uri = Uri.http("localhost:3000", "/api/agent/chat/collecton/get", {
+  var uri = Uri.http("localhost:3000", "/api/agent/chat/collection/get", {
     "username": username,
     "slug": slug,
   });

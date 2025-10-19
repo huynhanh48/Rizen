@@ -7,6 +7,7 @@ import session from "express-session";
 const app = express();
 const port = 3000;
 app.use(express.json());
+app.use("/vector", express.static("vector"));
 app.use(morgan("combined"));
 app.use(
   session({

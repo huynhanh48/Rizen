@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:mobileapp/api/addChat.dart';
 import 'package:mobileapp/api/collection.dart';
 import 'package:mobileapp/pages/about.dart';
 import 'package:mobileapp/services/authservice.dart';
@@ -45,12 +46,10 @@ class _WrapperBarState extends State<WrapperBar> {
         onPressed: () async {
           _globalKey.currentState?.openEndDrawer();
           final user = widget.client.getUser();
-          print(user);
           final result = await collectionChat(username: user!["username"]);
           setState(() {
             data = result?["collection"] ?? [];
           });
-          print(result?["collection"]);
         },
         backgroundColor: Colors.green.shade400,
         foregroundColor: Colors.white,
@@ -63,6 +62,7 @@ class _WrapperBarState extends State<WrapperBar> {
 class slideBar extends StatelessWidget {
   slideBar({super.key, required this.data});
   final List<dynamic> data;
+  TextEditingController _labelname = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -80,7 +80,57 @@ class slideBar extends StatelessWidget {
                     padding: EdgeInsets.all(8.0),
                     child: InkWell(
                       onTap: () {
-                        print(_index);
+                        switch (_index) {
+                          case 0:
+                            print(0);
+                            break;
+                          case 1:
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: Text(
+                                    "Tên cuộc trò truyện",
+                                    style: TextStyle(fontSize: 16),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  content: TextField(controller: _labelname),
+                                  actions: [
+                                    MaterialButton(
+                                      onPressed: () async {
+                                        var username = Authservice()
+                                            .getUser()!["username"];
+
+                                        await addChat(
+                                          username: username,
+                                          label: _labelname.text,
+                                        );
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: Text("Gửi"),
+                                    ),
+                                    MaterialButton(
+                                      onPressed: () {
+                                        Navigator.of(
+                                          context,
+                                        ).pop(); // đóng dialog
+                                      },
+                                      child: Text("Huỷ"),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                            break;
+                          case 2:
+                            print(2);
+                            break;
+                          case 3:
+                            print(3);
+                            break;
+                          default:
+                            print("default");
+                        }
                       },
                       child: Row(
                         children: [
@@ -124,7 +174,6 @@ class slideBar extends StatelessWidget {
                     itemBuilder: (context, _index) {
                       return InkWell(
                         onTap: () {
-                          print(data[_index]["slug"]);
                           Navigator.pushNamed(
                             context,
                             '/chat',
@@ -200,9 +249,7 @@ class AppBarCustome extends StatelessWidget implements PreferredSizeWidget {
         ),
         iconProfile(
           iconCustome: Icon(Icons.notifications),
-          iconCallBack: () {
-            print("----icon notification -----");
-          },
+          iconCallBack: () {},
         ),
       ],
     );

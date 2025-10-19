@@ -1,6 +1,8 @@
 import path from "path";
 import fs from "fs";
 import slugify from "slugify";
+import { config } from "dotenv";
+config();
 import {
   answerGemmi,
   embeddingImg,
@@ -64,26 +66,41 @@ class AgentController {
       });
 
       let embedding;
+      let response;
       if (file) {
         const ext = path.extname(file.originalname);
         const newFilePath = file.path + ext;
         fs.renameSync(file.path, newFilePath);
         embedding = await searchEmbeddingImg({ filepath: newFilePath });
+        response = await answerGemmi({
+          embedding,
+          question,
+          userSession: username,
+          allowFilePath: true,
+          fileSource: newFilePath,
+          labelname: labelname,
+        });
         fs.unlinkSync(newFilePath);
       } else {
         embedding = await searchEmbeddingText({ question });
+        response = await answerGemmi({
+          embedding,
+          question,
+          userSession: username,
+          labelname: labelname,
+        });
       }
 
-      const response = await answerGemmi({
-        embedding,
+      await learningSeft({
+        caption: response.answer,
         question,
-        userSession: username,
+        file: file ?? false,
       });
 
-      await learningSeft({ caption: response.answer, question });
-
       const existChat = await chat.findOne({ slug, username });
-
+      console.log(process.env.HOST);
+      const imghref = `${process.env.HOST}/${response.imgId ?? ""}`;
+      console.log(imghref);
       if (existChat) {
         await chat.updateOne(
           { slug, username },
@@ -99,6 +116,7 @@ class AgentController {
                   role: "model",
                   content: response.answer,
                   createdAt: new Date(),
+                  img: response.imgId ? imghref : null,
                 },
               ],
             },
@@ -112,19 +130,33 @@ class AgentController {
           username,
           ListChat: [
             { role: "user", content: question },
-            { role: "model", content: response.answer },
+            {
+              role: "model",
+              content: response.answer,
+              img: response.imgId ? imghref : null,
+            },
           ],
         });
       }
 
-      return res.status(200).json({
-        message: "successful",
-        data: {
-          role: "model",
-          content: response.answer,
-          createdAt: new Date(),
-        },
-      });
+      return file
+        ? res.status(200).json({
+            message: "successful",
+            data: {
+              role: "model",
+              content: response.answer,
+              createdAt: new Date(),
+              imgId: imghref,
+            },
+          })
+        : res.status(200).json({
+            message: "successful",
+            data: {
+              role: "model",
+              content: response.answer,
+              createdAt: new Date(),
+            },
+          });
     } catch (err) {
       console.error("Chat handler error:", err);
       return res.status(500).json({ message: "query failed", error: err });
@@ -176,14 +208,27 @@ class AgentController {
     }
   }
 
-  //post    add collection  chat  in chats  api/agent/chat/collecton/add
+  //post    add collection  chat  in chats  api/agent/chat/collection/add
   async addcollection(req, res, next) {
     const { username, label } = req.body;
     console.log(username, label);
+
+    const aiIntro =
+      "Xin chào! Tôi là trợ lý AI Stock — người bạn đồng hành thông minh trong việc phân tích và dự đoán thị trường chứng khoán. " +
+      "Tôi có thể giúp bạn xem xu hướng giá, phân tích dữ liệu, hoặc gợi ý chiến lược đầu tư. " +
+      "Bạn muốn tôi hỗ trợ điều gì hôm nay?";
+
     if (username && label) {
       await chat.create({
         username,
         name: label,
+        ListChat: [
+          {
+            role: "model",
+            content: aiIntro,
+            createdAt: new Date(),
+          },
+        ],
       });
       return res.status(200).json({
         message: "successful",
@@ -194,6 +239,7 @@ class AgentController {
       message: "error",
     });
   }
+
   //get    api/agent/chat/collecton/get?username=anhvo?slug=abc
   async getChats(req, res, next) {
     const { username, slug } = req.query;

@@ -1,9 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:dash_chat_2/dash_chat_2.dart';
 import 'package:mobileapp/api/chatAgent.dart';
 import 'package:mobileapp/api/getChats.dart';
 import 'package:mobileapp/services/authservice.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ChatBox extends StatefulWidget {
   const ChatBox({super.key});
@@ -17,14 +19,19 @@ class _ChatBoxState extends State<ChatBox> {
   late ChatUser chatbox;
   List<ChatMessage> messages = [];
   final Authservice authservice = Authservice();
-  bool isTyping = false; // flag hiển thị đang gõ
+  bool isTyping = false;
+  File? isImage = null;
 
   @override
   void initState() {
     super.initState();
     final username = authservice.getUser()?["username"] ?? "Guest";
     user = ChatUser(id: '1', firstName: username);
-    chatbox = ChatUser(id: '2', firstName: 'AI Stock');
+    chatbox = ChatUser(
+      id: '2',
+      firstName: 'Stock',
+      profileImage: "assets/ai.png",
+    );
   }
 
   Future<void> fetchChats(String username, String slug) async {
@@ -33,10 +40,21 @@ class _ChatBoxState extends State<ChatBox> {
       final chats = result?['Chats'] as List<dynamic>;
       final newMessages = chats.map((chat) {
         final isUser = chat['role'] == 'user';
+        String? imgUrl;
+        String textContent = '';
+        if (chat['content'] is Map) {
+          textContent = chat['content']['text'] ?? '';
+          imgUrl = chat['content']['img'];
+        } else {
+          textContent = chat['content'] ?? '';
+          imgUrl = chat['img'];
+        }
+
         return ChatMessage(
-          text: chat['content'],
+          text: textContent,
           user: isUser ? user : chatbox,
           createdAt: DateTime.parse(chat['createdAt']),
+          customProperties: imgUrl != null ? {'img': imgUrl} : {},
         );
       }).toList();
 
@@ -61,8 +79,32 @@ class _ChatBoxState extends State<ChatBox> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI Stock'),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: CircleAvatar(
+                backgroundColor: Colors.transparent,
+                backgroundImage: AssetImage("assets/ai.png"),
+                radius: 15,
+              ),
+            ),
+            Text(
+              'Stock',
+              style: TextStyle(
+                color: Colors.lightBlueAccent.shade700,
+                fontWeight: FontWeight.w600, // dày vừa phải, không thô
+                fontSize: 20,
+                letterSpacing: 1,
+              ),
+            ),
+            SizedBox(width: 45),
+          ],
+        ),
         backgroundColor: Colors.white,
+        elevation: 2, // nhẹ nhàng tạo cảm giác nổi
+        centerTitle: true, // căn giữa title cho hiện đại
       ),
       body: Stack(
         children: [
@@ -76,18 +118,57 @@ class _ChatBoxState extends State<ChatBox> {
               textColor: Colors.black,
               messageTextBuilder:
                   (ChatMessage msg, ChatMessage? prev, ChatMessage? next) {
-                    return MarkdownBody(
-                      data: msg.text,
-                      selectable: true,
-                      styleSheet:
-                          MarkdownStyleSheet.fromTheme(
-                            Theme.of(context),
-                          ).copyWith(
-                            p: const TextStyle(fontSize: 13, height: 1.4),
-                            strong: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                    final imgUrl = msg.customProperties?['img'];
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        MarkdownBody(
+                          data: msg.text,
+                          selectable: true,
+                          styleSheet:
+                              MarkdownStyleSheet.fromTheme(
+                                Theme.of(context),
+                              ).copyWith(
+                                p: const TextStyle(fontSize: 13, height: 1.4),
+                                strong: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                        ),
+                        imgUrl != null && imgUrl.isNotEmpty
+                            ? Column(
+                                children: [
+                                  const SizedBox(height: 6),
+                                  Text(" ** Biểu đồ tham khảo **"),
+                                  GestureDetector(
+                                    onTap: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (_) => Dialog(
+                                          child: InteractiveViewer(
+                                            child: Image.network(
+                                              imgUrl,
+                                              fit: BoxFit.cover,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(
+                                        imgUrl,
+                                        height: 120,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : const SizedBox.shrink(), // không hiển thị gì nếu imgUrl null
+                      ],
                     );
                   },
             ),
@@ -95,45 +176,69 @@ class _ChatBoxState extends State<ChatBox> {
               trailing: [
                 SizedBox(
                   width: 40,
-                  child: IconButton(onPressed: () {}, icon: Icon(Icons.image)),
+                  child: IconButton(
+                    onPressed: () async {
+                      final result = await sendImage(context);
+                      if (result != null) {
+                        setState(() {
+                          isImage = result;
+                        });
+                      }
+                    },
+                    icon: Icon(Icons.image),
+                  ),
                 ),
               ],
             ),
-            typingUsers: isTyping ? [chatbox] : [], // hiển thị đang gõ
+            typingUsers: isTyping ? [chatbox] : [],
             onSend: (ChatMessage m) async {
+              if (isImage != null) {
+                m.medias = [
+                  ChatMedia(
+                    url: isImage?.path ?? "",
+                    fileName: "",
+                    type: MediaType.image,
+                  ),
+                ];
+              }
               setState(() {
                 messages.insert(0, m);
-                isTyping = true; // bật typing
-              });
-
-              // tạo tin nhắn "đang soạn..."
-              final loadingMsg = ChatMessage(
-                text: "",
-                user: chatbox,
-                createdAt: DateTime.now(),
-              );
-              setState(() {
-                messages.insert(0, loadingMsg);
+                isTyping = true;
               });
 
               final res = await sendQuestion(
                 username: username,
                 question: m.text,
                 labelname: slug,
+                hadFile: isImage != null ? true : false,
+                file: isImage ?? null,
               );
 
               setState(() {
-                isTyping = false; // tắt typing
-                messages.remove(loadingMsg); // xoá loading
+                isTyping = false;
+                isImage = null;
               });
 
               if (res != null && res['message'] == 'successful') {
                 final data = res['data'];
+
+                String replyText = '';
+                String? imgUrl;
+
+                if (data['content'] is Map) {
+                  replyText = data['content']['text'] ?? '';
+                  imgUrl = data['content']['img'];
+                } else {
+                  replyText = data['content']?.toString() ?? '';
+                }
+
                 final reply = ChatMessage(
-                  text: data['content'] ?? 'Không có phản hồi từ AI',
+                  text: replyText,
                   user: chatbox,
                   createdAt: DateTime.parse(data['createdAt']),
+                  customProperties: imgUrl != null ? {'img': imgUrl} : {},
                 );
+
                 setState(() {
                   messages.insert(0, reply);
                 });
@@ -155,4 +260,10 @@ class _ChatBoxState extends State<ChatBox> {
       ),
     );
   }
+}
+
+Future<File?> sendImage(BuildContext context) async {
+  final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+  if (picked == null) return null;
+  return File(picked.path);
 }
