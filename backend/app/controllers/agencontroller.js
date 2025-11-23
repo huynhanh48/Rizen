@@ -51,14 +51,12 @@ class AgentController {
       });
       return res.status(200).json({ message: "successfull" });
     }
-    return res.status(400).json({ message: "errorr" });
   }
   //   api/chat
   async chat(req, res, next) {
     try {
       const file = req.file;
       const { question, labelname, username } = req.body;
-      console.log("qs,lb,un:", question, labelname, username);
 
       const slug = slugify(labelname || question, {
         lower: true,
@@ -72,6 +70,7 @@ class AgentController {
         const newFilePath = file.path + ext;
         fs.renameSync(file.path, newFilePath);
         embedding = await searchEmbeddingImg({ filepath: newFilePath });
+        console.log("search xong: ");
         response = await answerGemmi({
           embedding,
           question,
@@ -98,9 +97,7 @@ class AgentController {
       });
 
       const existChat = await chat.findOne({ slug, username });
-      console.log(process.env.HOST);
       const imghref = `${process.env.HOST}/${response.imgId ?? ""}`;
-      console.log(imghref);
       if (existChat) {
         await chat.updateOne(
           { slug, username },
@@ -158,7 +155,6 @@ class AgentController {
             },
           });
     } catch (err) {
-      console.error("Chat handler error:", err);
       return res.status(500).json({ message: "query failed", error: err });
     }
   }
@@ -167,7 +163,6 @@ class AgentController {
   //get  collection  chat  in chats  api/agent/chat/collection
   async collection(req, res, next) {
     const { username } = req.query;
-    console.log("username:", username);
 
     try {
       const collection = await chat.aggregate([
@@ -193,14 +188,11 @@ class AgentController {
           },
         },
       ]);
-
-      console.log("collection:", collection);
       return res.status(200).json({
         message: "successful",
         collection,
       });
     } catch (error) {
-      console.error("Error in collection:", error);
       return res.status(400).json({
         message: "query failed!",
         error: error.message,
@@ -211,7 +203,6 @@ class AgentController {
   //post    add collection  chat  in chats  api/agent/chat/collection/add
   async addcollection(req, res, next) {
     const { username, label } = req.body;
-    console.log(username, label);
 
     const aiIntro =
       "Xin chào! Tôi là trợ lý AI Stock — người bạn đồng hành thông minh trong việc phân tích và dự đoán thị trường chứng khoán. " +

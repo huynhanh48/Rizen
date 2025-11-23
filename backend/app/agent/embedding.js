@@ -137,14 +137,18 @@ async function answerGemmi({
     console.log("debug-upload:\nfilepath1,2:", filepath1, filepath2);
     console.log(references);
 
-    uploaded1 = await ai.files.upload({
-      file: filepath1,
-    });
-    uploaded2 = await ai.files.upload({
-      file: filepath2,
-    });
+    try {
+      uploaded1 = await ai.files.upload({
+        file: filepath1,
+      });
+      uploaded2 = await ai.files.upload({
+        file: filepath2,
+      });
+    } catch (error) {
+      console.log(error);
+    }
   }
-
+  console.log("API key : ", GEMINI_API_KEY);
   const prompt = `
 Câu hỏi từ người dùng: ${question}
 
@@ -184,7 +188,7 @@ Yêu cầu cách trình bày:
 Mục tiêu:
 - Tạo ra nhận định thực tế, có lập luận kỹ thuật, giúp người đọc hiểu và tin tưởng vào logic phân tích.
 `;
-
+  console.log("usersesssion ,labelname", userSession, labelname);
   const history = await chat.findOne({
     username: userSession,
     slug: labelname,
